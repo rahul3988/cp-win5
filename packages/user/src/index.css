@@ -1,0 +1,411 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables */
+:root {
+  --gold-400: #fbbf24;
+  --gold-500: #f59e0b;
+  --gold-600: #d97706;
+  --gold-700: #b45309;
+}
+
+/* Responsive Design Utilities */
+@layer utilities {
+  /* Mobile-first responsive text */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm md:text-base;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base md:text-lg;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg md:text-xl;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl md:text-3xl;
+  }
+  
+  /* Responsive spacing */
+  .p-responsive {
+    @apply p-3 sm:p-4 md:p-6;
+  }
+  
+  .px-responsive {
+    @apply px-3 sm:px-4 md:px-6;
+  }
+  
+  .py-responsive {
+    @apply py-3 sm:py-4 md:py-6;
+  }
+  
+  /* Responsive grid */
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  /* Responsive container */
+  .container-responsive {
+    @apply max-w-7xl mx-auto px-3 sm:px-4 lg:px-6;
+  }
+}
+
+/* Game-specific Components */
+@layer components {
+  /* Card component for dark theme */
+  .card {
+    @apply rounded-lg border border-gray-700 bg-gray-800 shadow-lg;
+  }
+  
+  .card-header {
+    @apply flex flex-col space-y-1.5 p-6 border-b border-gray-700;
+  }
+  
+  .card-title {
+    @apply text-xl font-semibold leading-none tracking-tight text-white;
+  }
+  
+  .card-description {
+    @apply text-sm text-gray-400;
+  }
+  
+  .card-content {
+    @apply p-6;
+  }
+  
+  .card-footer {
+    @apply flex items-center p-6 pt-0 border-t border-gray-700;
+  }
+  
+  /* Button variants for dark theme */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .btn-primary {
+    @apply bg-gold-600 text-white hover:bg-gold-700 active:bg-gold-800;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-700 text-white hover:bg-gray-600 active:bg-gray-500;
+  }
+  
+  .btn-outline {
+    @apply border border-gray-600 text-gray-200 hover:bg-gray-700 hover:text-white;
+  }
+  
+  .btn-ghost {
+    @apply text-gray-300 hover:bg-gray-700 hover:text-white;
+  }
+  
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700 active:bg-green-800;
+  }
+  
+  .btn-warning {
+    @apply bg-red-600 text-white hover:bg-red-700 active:bg-red-800;
+  }
+  
+  .btn-sm { @apply h-8 px-3 text-xs; }
+  .btn-md { @apply h-10 px-4 py-2; }
+  .btn-lg { @apply h-12 px-6 text-base; }
+
+  /* Form components for dark theme */
+  .form-label {
+    @apply text-sm font-medium leading-none text-gray-300 mb-1 block;
+  }
+  .form-input {
+    @apply flex h-10 w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400;
+  }
+  /* Wheel Pointer */
+  .wheel-pointer {
+    @apply w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6;
+    background: linear-gradient(45deg, #fbbf24, #f59e0b);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  }
+
+  /* Internal Wheel Pointer - Points to 0-degree mark */
+  .wheel-pointer-internal {
+    @apply w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+      0 0 10px rgba(251, 191, 36, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    position: relative;
+  }
+  
+  .wheel-pointer-internal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    pointer-events: none;
+  }
+
+  /* Glow Effects */
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+  }
+
+  /* Betting Board Buttons */
+  .number-btn {
+    @apply relative flex items-center justify-center rounded-lg font-bold transition-all duration-200;
+    @apply text-sm sm:text-base md:text-lg lg:text-xl;
+    @apply p-2 sm:p-3 md:p-4;
+    @apply hover:scale-105 active:scale-95;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .number-btn-red {
+    @apply bg-red-600 hover:bg-red-700 text-white;
+  }
+
+  .number-btn-black {
+    @apply bg-gray-900 hover:bg-gray-800 text-white border-2 border-gray-700;
+  }
+
+  .color-btn {
+    @apply relative flex items-center justify-center rounded-lg font-bold transition-all duration-200;
+    @apply text-sm sm:text-base md:text-lg;
+    @apply p-2 sm:p-3 md:p-4;
+    @apply hover:scale-105 active:scale-95;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .color-btn-red {
+    @apply bg-red-600 hover:bg-red-700 text-white;
+  }
+
+  .color-btn-black {
+    @apply bg-gray-900 hover:bg-gray-800 text-white border-2 border-gray-700;
+  }
+
+  .odd-even-btn {
+    @apply relative flex items-center justify-center rounded-lg font-bold transition-all duration-200;
+    @apply text-sm sm:text-base md:text-lg;
+    @apply p-2 sm:p-3 md:p-4;
+    @apply hover:scale-105 active:scale-95;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .odd-even-btn-odd {
+    @apply bg-blue-600 hover:bg-blue-700 text-white;
+  }
+
+  .odd-even-btn-even {
+    @apply bg-purple-600 hover:bg-purple-700 text-white;
+  }
+
+  /* Chip Selection */
+  .chip-btn {
+    @apply p-2 sm:p-3 rounded-lg font-bold transition-all duration-200;
+    @apply text-xs sm:text-sm;
+    @apply hover:scale-105 active:scale-95;
+  }
+
+  .chip-btn-selected {
+    @apply bg-gold-500 text-black ring-2 ring-gold-300;
+  }
+
+  .chip-btn-unselected {
+    @apply bg-gray-700 hover:bg-gray-600 text-white;
+  }
+
+  /* Timer Components */
+  .timer-ring {
+    @apply w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56;
+  }
+
+  .timer-text {
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-mono;
+  }
+
+  /* Activity Feed */
+  .activity-item {
+    @apply flex items-center space-x-2 sm:space-x-3 p-2 bg-gray-800 rounded-lg;
+  }
+
+  .activity-avatar {
+    @apply w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full;
+    @apply flex items-center justify-center;
+  }
+
+  .activity-text {
+    @apply text-xs sm:text-sm;
+  }
+
+  /* Modal Components */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50;
+    @apply p-4;
+  }
+
+  .modal-content {
+    @apply bg-gray-800 rounded-lg p-6 sm:p-8 max-w-md w-full text-center;
+  }
+
+  /* Loading Spinner */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-12 w-12 border-b-2 border-gold-400;
+  }
+
+  /* Responsive Layout */
+  .game-layout {
+    @apply grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+
+  .game-main {
+    @apply lg:col-span-2 space-y-4 sm:space-y-6;
+  }
+
+  .game-sidebar {
+    @apply space-y-4 sm:space-y-6;
+  }
+
+  /* Mobile-specific */
+  .mobile-only {
+    @apply lg:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden lg:block;
+  }
+
+  /* Touch-friendly buttons */
+  .touch-button {
+    @apply min-h-[44px] min-w-[44px];
+    @apply flex items-center justify-center;
+  }
+
+  /* Scrollbar Styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 #1f2937;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+}
+
+/* Animation Classes */
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .glow-gold {
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.4);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .number-btn-red {
+    @apply bg-red-800 border-2 border-red-400;
+  }
+  
+  .number-btn-black {
+    @apply bg-black border-2 border-white;
+  }
+}
+
+/* WCAG AA Contrast Improvements */
+@layer utilities {
+  /* High contrast text classes */
+  .text-high-contrast {
+    @apply text-white;
+  }
+  
+  .text-high-contrast-gray {
+    @apply text-gray-200;
+  }
+  
+  .text-high-contrast-muted {
+    @apply text-gray-300;
+  }
+  
+  /* High contrast background classes */
+  .bg-high-contrast {
+    @apply bg-gray-900;
+  }
+  
+  .bg-high-contrast-card {
+    @apply bg-gray-800;
+  }
+  
+  /* Improved button contrast */
+  .btn-high-contrast {
+    @apply border-2 border-white/20;
+  }
+  
+  /* Better focus states for accessibility */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-bounce,
+  .animate-spin,
+  .animate-pulse-slow,
+  .animate-bounce-slow,
+  .animate-spin-slow {
+    animation: none;
+  }
+  
+  .hover\:scale-105:hover,
+  .active\:scale-95:active {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .game-layout,
+  .modal-overlay,
+  .loading-overlay {
+    display: none !important;
+  }
+}

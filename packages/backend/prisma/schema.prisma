@@ -1,0 +1,508 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  username        String   @unique
+  email           String   @unique
+  password        String
+  avatarUrl       String?  // Avatar image URL - updated field
+  mustChangePassword Boolean @default(false)
+  walletBetting   Decimal  @default(0.0)  // Betting Wallet - for deposits, withdrawals, and betting
+  walletGaming    Decimal  @default(0.0)  // Gaming Wallet - for cashback, referrals, and bonuses
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // New wallet and program fields
+  bonusBalance    Float    @default(0)  // Bonus money requiring wagering
+  coins           Float    @default(0)  // Win5x Coin balance
+  wageringRequired Float   @default(0)  // Required wagering to unlock bonus/withdrawal
+  wageringProgress Float   @default(0)  // Progress towards wagering requirement
+  referralCode     String?  @unique
+  referredById     String?  // Parent referrer (direct)
+  attendanceStreak Int     @default(0)
+  lastAttendanceAt DateTime?
+
+  // Relations
+  bets              Bet[]
+  transactions      Transaction[]
+  depositRequests   DepositRequest[]
+  withdrawalRequests WithdrawalRequest[]
+  paymentAuditLogs  PaymentAuditLog[]
+  notifications     Notification[]
+  referrals         Referral[]        @relation("UserReferrals")
+  referralLinks     Referral[]        @relation("ReferredUser")
+  referralEarnings  ReferralEarning[] @relation("EarningUser")
+  earningsFrom      ReferralEarning[] @relation("EarningFromUser")
+  cashbackSchedules CashbackSchedule[]
+  giftCodeRedemptions GiftCodeRedemption[]
+
+  @@map("users")
+}
+
+model Admin {
+  id          String           @id @default(uuid())
+  username    String           @unique
+  email       String           @unique
+  password    String
+  role        AdminRole        @default(ADMIN)
+  permissions AdminPermission[]
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relations
+  approvedTransactions Transaction[] @relation("ApprovedBy")
+  auditLogs           AuditLog[]
+  approvedDeposits    DepositRequest[]
+  approvedWithdrawals WithdrawalRequest[]
+  paymentAuditLogs    PaymentAuditLog[]
+  giftCodes           GiftCode[]
+
+  @@map("admins")
+}
+
+model GameRound {
+  id               String          @id @default(uuid())
+  roundNumber      Int             @unique
+  status           GameRoundStatus @default(BETTING)
+  bettingStartTime DateTime        @default(now())
+  bettingEndTime   DateTime?
+  spinStartTime    DateTime?
+  resultTime       DateTime?
+  winningNumber    Int?
+  winningColor     String?
+  isWinningOdd     Boolean?
+  totalBetAmount   Float           @default(0)
+  totalPayout      Float           @default(0)
+  houseProfitLoss  Float           @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  // Relations
+  bets Bet[]
+
+  @@map("game_rounds")
+}
+
+model Bet {
+  id              String    @id @default(uuid())
+  userId          String
+  roundId         String
+  betType         BetType
+  betValue        String // JSON string to handle number | string
+  amount          Float
+  potentialPayout Float
+  isWinner        Boolean?
+  actualPayout    Float     @default(0)
+  status          BetStatus @default(PENDING)
+  walletType      WalletType @default(BETTING) // Track which wallet was used
+  placedAt        DateTime  @default(now())
+  settledAt       DateTime?
+  
+  // Expanded bet information
+  originalAmount  Float?    // Original amount entered by user
+  totalBetAmount  Float?    // Total bet amount after expansion
+  expandedBets    Json?     // Array of { number, bet } objects
+  coveredNumbers  Json?     // Array of numbers covered by this bet
+
+  // Relations
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  round GameRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  cashbackSchedules CashbackSchedule[]
+
+  @@map("bets")
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  userId      String
+  type        TransactionType
+  amount      Float
+  wallet      WalletType        @default(BETTING)  // Which wallet was affected
+  status      TransactionStatus @default(PENDING)
+  description String
+  reference   String?
+  approvedBy  String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approver Admin? @relation("ApprovedBy", fields: [approvedBy], references: [id])
+
+  @@map("transactions")
+}
+
+model Referral {
+  id        String  @id @default(uuid())
+  userId    String  // The child (referred) user
+  parentId  String  // The referrer (could be L1 or higher for records)
+  level     Int     // 1,2,3,4,5,6,7,8,9,10,11,12
+  createdAt DateTime @default(now())
+
+  user   User @relation("ReferredUser", fields: [userId], references: [id], onDelete: Cascade)
+  parent User @relation("UserReferrals", fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, level])
+  @@index([userId])
+  @@map("referrals")
+}
+
+model ReferralEarning {
+  id          String   @id @default(uuid())
+  userId      String   // Who receives the earning
+  fromUserId  String   // Whose activity generated the earning
+  level       Int      // 1,2,3,4,5,6,7,8,9,10,11,12
+  amount      Float
+  source      String   // 'WAGER' | 'DEPOSIT' or other
+  createdAt   DateTime @default(now())
+
+  user      User @relation("EarningUser", fields: [userId], references: [id], onDelete: Cascade)
+  fromUser  User @relation("EarningFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+
+  @@index([userId, level])
+  @@index([fromUserId])
+  @@map("referral_earnings")
+}
+
+model AdminConfig {
+  id                 String  @id @default(uuid())
+  referralLevel1Pct  Float   @default(0)
+  referralLevel2Pct  Float   @default(0)
+  referralLevel3Pct  Float   @default(0)
+  referralLevel4Pct  Float   @default(0)
+  referralLevel5Pct  Float   @default(0)
+  referralLevel6Pct  Float   @default(0)
+  referralLevel7Pct  Float   @default(0)
+  referralLevel8Pct  Float   @default(0)
+  referralLevel9Pct  Float   @default(0)
+  referralLevel10Pct Float   @default(0)
+  referralLevel11Pct Float   @default(0)
+  referralLevel12Pct Float   @default(0)
+  attendanceDay7Amt  Float   @default(60)
+  depositBonusPct    Float   @default(5)
+  usdtToInrRate      Float   @default(83.0)  // USDT to INR conversion rate
+  attendanceTiers    Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("admin_config")
+}
+
+model GiftCode {
+  id          String               @id @default(uuid())
+  code        String               @unique
+  amount      Float
+  usageLimit  Int                  @default(1)
+  usedCount   Int                  @default(0)
+  expiryDate  DateTime
+  status      GiftCodeStatus       @default(ACTIVE)
+  createdBy   String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  redemptions GiftCodeRedemption[]
+  admin       Admin                @relation(fields: [createdBy], references: [id])
+  
+  @@map("gift_codes")
+}
+
+model GiftCodeRedemption {
+  id         String   @id @default(uuid())
+  giftCodeId String
+  userId     String
+  amount     Float
+  redeemedAt DateTime @default(now())
+  
+  giftCode   GiftCode @relation(fields: [giftCodeId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([giftCodeId, userId])
+  @@map("gift_code_redemptions")
+}
+
+model GameConfig {
+  id                String   @id @default(uuid())
+  bettingDuration   Int      @default(30)
+  spinDuration      Int      @default(10)
+  resultDuration    Int      @default(15)
+  minBetAmount      Float    @default(1)
+  maxBetAmount      Float    @default(10000)
+  payoutMultiplier  Float    @default(5)
+  cashbackPercentage Float   @default(10)
+  maxExposure       Float    @default(1000000)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("game_configs")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  action    String
+  target    String?
+  targetId  String?
+  oldValue  String? // JSON string
+  newValue  String? // JSON string
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  admin Admin @relation(fields: [adminId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model PaymentMethod {
+  id           String   @id @default(uuid())
+  name         String   @unique // 'phonepe', 'googlepay', 'paytm', 'usdt'
+  displayName  String
+  isActive     Boolean  @default(true)
+  qrCodeUrl    String?  // URL to QR code image
+  qrCodeData   String?  // QR code data/payload
+  upiId        String?  // For UPI payments
+  walletAddress String? // For USDT or other crypto
+  instructions String?  // Payment instructions
+  minAmount    Float    @default(10.00)
+  maxAmount    Float    @default(100000.00)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  depositRequests DepositRequest[]
+
+  @@map("payment_methods")
+}
+
+model DepositRequest {
+  id              String         @id @default(uuid())
+  userId          String
+  paymentMethodId String
+  amount          Float
+  utrCode         String?        // Unique Transaction Reference (for UPI payments)
+  usdtHash        String?        // USDT Transaction Hash (for crypto payments)
+  status          DepositStatus  @default(PENDING)
+  adminNotes      String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectedReason  String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  approver      Admin?        @relation(fields: [approvedBy], references: [id])
+
+  @@map("deposit_requests")
+}
+
+model WithdrawalRequest {
+  id              String           @id @default(uuid())
+  userId          String
+  amount          Float
+  paymentMethod   String           // User's preferred method
+  accountDetails  String           // JSON string with payment details
+  status          WithdrawalStatus @default(PENDING)
+  adminNotes      String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  completedAt     DateTime?
+  rejectionReason String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relations
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approver Admin? @relation(fields: [approvedBy], references: [id])
+
+  @@map("withdrawal_requests")
+}
+
+model PaymentAuditLog {
+  id         String   @id @default(uuid())
+  entityType String   // 'deposit_request', 'withdrawal_request', 'payment_method'
+  entityId   String
+  action     String   // 'created', 'approved', 'rejected', 'updated'
+  oldData    String?  // JSON string
+  newData    String?  // JSON string
+  adminId    String?
+  userId     String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  admin Admin? @relation(fields: [adminId], references: [id])
+  user  User?  @relation(fields: [userId], references: [id])
+
+  @@map("payment_audit_logs")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // 'deposit_approved', 'withdrawal_rejected', etc.
+  title     String
+  message   String
+  data      String?  // JSON string for additional data
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Promotion {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  imageUrl   String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("promotions")
+}
+
+model SecurityLog {
+  id        String   @id @default(uuid())
+  type      String   // 'login_attempt', 'failed_login', 'suspicious_betting', etc.
+  userId    String?
+  details   String?  // JSON string
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("security_logs")
+}
+
+model CashbackSchedule {
+  id               String   @id @default(uuid())
+  betId            String
+  userId           String
+  totalAmount      Float
+  day1Amount       Float
+  dailyAmount      Float
+  remainingAmount  Float
+  status           CashbackStatus @default(SCHEDULED)
+  lastProcessedAt  DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  bet  Bet  @relation(fields: [betId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("cashback_schedules")
+}
+
+// Enums
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  MODERATOR
+}
+
+enum AdminPermission {
+  MANAGE_BETS
+  MANAGE_USERS
+  MANAGE_WITHDRAWALS
+  MANAGE_DEPOSITS
+  VIEW_ANALYTICS
+  EMERGENCY_CONTROLS
+  MANAGE_TIMERS
+  GIFT_CODES
+}
+
+enum GameRoundStatus {
+  BETTING
+  BETTING_CLOSED
+  COUNTDOWN
+  SPINNING
+  RESULT
+  COMPLETED
+  CANCELLED
+}
+
+enum BetType {
+  NUMBER
+  ODD_EVEN
+}
+
+enum BetStatus {
+  PENDING
+  WON
+  LOST
+  CANCELLED
+  REFUNDED
+}
+
+enum WalletType {
+  BETTING
+  GAMING
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  BET_PLACED
+  BET_WON
+  BET_LOST
+  CASHBACK
+  REFERRAL_EARNING
+  BONUS_CREDIT
+  COIN_CREDIT
+  COIN_DEBIT
+  GIFT_CODE_REDEMPTION
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum DepositStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum CashbackStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum GiftCodeStatus {
+  ACTIVE
+  EXPIRED
+  EXHAUSTED
+}
