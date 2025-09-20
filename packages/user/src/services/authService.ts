@@ -2,15 +2,18 @@ import axios from 'axios';
 import { User, AuthTokens, API_ENDPOINTS } from '@win5x/common';
 
 // In dev, omit base URL to use Vite proxy so mobile over LAN works without envs
-const API_URL = import.meta.env.VITE_API_URL || '';
+// Force empty baseURL regardless of VITE_API_URL to use Vite proxy
+const API_URL = '';
 
 class AuthService {
   private api = axios.create({
-    baseURL: API_URL,
-    timeout: 10000,
+    baseURL: API_URL, // Force empty baseURL to use Vite proxy
+    timeout: 30000, // Increased timeout to 30 seconds
   });
 
   constructor() {
+    console.log('🔧 AuthService initialized with baseURL:', this.api.defaults.baseURL);
+    console.log('🌐 VITE_API_URL:', import.meta.env.VITE_API_URL);
     this.setupInterceptors();
   }
 
@@ -62,12 +65,32 @@ class AuthService {
     accessToken: string;
     refreshToken: string;
   }> {
-    const response = await this.api.post(API_ENDPOINTS.LOGIN, {
-      username,
-      password,
-    });
+    try {
+      console.log('🔐 Attempting login for user:', username);
+      console.log('🌐 API URL:', this.api.defaults.baseURL || 'relative');
+      console.log('📡 Endpoint:', API_ENDPOINTS.LOGIN);
+      console.log('🔧 Full URL will be:', `${this.api.defaults.baseURL || ''}${API_ENDPOINTS.LOGIN}`);
+      
+      const response = await this.api.post(API_ENDPOINTS.LOGIN, {
+        username,
+        password,
+      });
 
-    return response.data.data;
+      console.log('✅ Login successful:', response.data);
+      return response.data.data;
+    } catch (error: any) {
+      console.error('❌ Login error:', error);
+      console.error('❌ Error config:', error.config);
+      if (error.code === 'ECONNABORTED') {
+        console.error('⏰ Request timeout - check network connection');
+        throw new Error('Connection timeout. Please check your internet connection and try again.');
+      }
+      if (error.code === 'ERR_NETWORK') {
+        console.error('🌐 Network error - check if backend is running and accessible');
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+      throw error;
+    }
   }
 
   async register(username: string, email: string, password: string, referralCode?: string): Promise<{
@@ -75,14 +98,28 @@ class AuthService {
     accessToken: string;
     refreshToken: string;
   }> {
-    const response = await this.api.post(API_ENDPOINTS.REGISTER, {
-      username,
-      email,
-      password,
-      referralCode,
-    });
+    try {
+      console.log('📝 Attempting registration for user:', username);
+      console.log('🌐 API URL:', this.api.defaults.baseURL || 'relative');
+      console.log('📡 Endpoint:', API_ENDPOINTS.REGISTER);
+      
+      const response = await this.api.post(API_ENDPOINTS.REGISTER, {
+        username,
+        email,
+        password,
+        referralCode,
+      });
 
-    return response.data.data;
+      console.log('✅ Registration successful:', response.data);
+      return response.data.data;
+    } catch (error: any) {
+      console.error('❌ Registration error:', error);
+      if (error.code === 'ECONNABORTED') {
+        console.error('⏰ Request timeout - check network connection');
+        throw new Error('Connection timeout. Please check your internet connection and try again.');
+      }
+      throw error;
+    }
   }
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
@@ -95,7 +132,7 @@ class AuthService {
 
   async verifyToken(token: string): Promise<User | null> {
     try {
-      const response = await axios.get(`${API_URL}${API_ENDPOINTS.VERIFY}`, {
+      const response = await this.api.get(API_ENDPOINTS.VERIFY, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

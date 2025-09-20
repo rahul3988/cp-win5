@@ -71,7 +71,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         toast.success('Welcome back!');
       }
     } catch (error: any) {
-      const message = error.response?.data?.error || 'Login failed';
+      console.error('Login error:', error);
+      const message = error.response?.data?.error || error.response?.data?.message || error.message || 'Login failed';
       toast.error(message);
       throw error;
     } finally {
@@ -97,7 +98,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       toast.success('Welcome to Win5x!');
     } catch (error: any) {
-      const message = error.response?.data?.error || 'Registration failed';
+      console.error('Registration error:', error);
+      const message = error.response?.data?.error || error.response?.data?.message || error.message || 'Registration failed';
       toast.error(message);
       throw error;
     } finally {

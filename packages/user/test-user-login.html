@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #1a1a1a; color: white; }
+        .form-group { margin: 20px 0; }
+        label { display: block; margin-bottom: 5px; color: #fbbf24; }
+        input { padding: 12px; width: 300px; background: #374151; border: 2px solid #fbbf24; border-radius: 8px; color: white; }
+        input:focus { outline: none; border-color: #f59e0b; }
+        button { padding: 12px 24px; background: linear-gradient(45deg, #fbbf24, #f59e0b); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button:hover { background: linear-gradient(45deg, #f59e0b, #d97706); }
+        button:disabled { background: #6b7280; cursor: not-allowed; }
+        .result { margin-top: 20px; padding: 15px; background: #374151; border: 2px solid #4b5563; border-radius: 8px; }
+        .success { background: #064e3b; border-color: #10b981; color: #d1fae5; }
+        .error { background: #7f1d1d; border-color: #ef4444; color: #fecaca; }
+        .test-credentials { background: #1f2937; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .test-credentials h3 { color: #fbbf24; margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>🎮 Win5x User Login Test</h1>
+    
+    <div class="test-credentials">
+        <h3>Test Credentials:</h3>
+        <p><strong>Username:</strong> testuser1</p>
+        <p><strong>Password:</strong> Test123!</p>
+        <p><strong>Username:</strong> testuser2</p>
+        <p><strong>Password:</strong> Test123!</p>
+        <p><strong>Username:</strong> testuser3</p>
+        <p><strong>Password:</strong> Test123!</p>
+    </div>
+    
+    <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" value="testuser1">
+    </div>
+    
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" value="Test123!">
+    </div>
+    
+    <button onclick="testLogin()" id="loginBtn">Test Login</button>
+    
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            try {
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Testing...';
+                
+                console.log('Testing user login with:', username, password);
+                
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <h3>✅ Login Successful!</h3>
+                        <p><strong>User ID:</strong> ${data.data.user.id}</p>
+                        <p><strong>Username:</strong> ${data.data.user.username}</p>
+                        <p><strong>Email:</strong> ${data.data.user.email}</p>
+                        <p><strong>Avatar:</strong> ${data.data.user.avatarUrl}</p>
+                        <p><strong>Betting Wallet:</strong> ${data.data.user.walletBetting}</p>
+                        <p><strong>Gaming Wallet:</strong> ${data.data.user.walletGaming}</p>
+                        <p><strong>Must Change Password:</strong> ${data.data.user.mustChangePassword ? 'Yes' : 'No'}</p>
+                        <p><strong>Access Token:</strong> ${data.data.accessToken ? 'Present' : 'Missing'}</p>
+                        <p><strong>Refresh Token:</strong> ${data.data.refreshToken ? 'Present' : 'Missing'}</p>
+                    `;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3>❌ Login Failed</h3>
+                        <p><strong>Error:</strong> ${data.message || 'Unknown error'}</p>
+                    `;
+                    resultDiv.className = 'result error';
+                }
+                
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                resultDiv.innerHTML = `
+                    <h3>❌ Network Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Stack:</strong> ${error.stack}</p>
+                `;
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Test Login';
+            }
+        }
+        
+        // Test on page load
+        window.addEventListener('load', () => {
+            console.log('User login test page loaded');
+            console.log('Current URL:', window.location.href);
+            console.log('API endpoint would be:', window.location.origin + '/api/auth/login');
+        });
+    </script>
+</body>
+</html>

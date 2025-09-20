@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #1a1a1a; color: white; }
+        .test-section { margin: 20px 0; padding: 20px; background: #2a2a2a; border-radius: 8px; }
+        button { padding: 10px 20px; background: #fbbf24; color: black; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #f59e0b; }
+        .result { margin-top: 10px; padding: 10px; background: #374151; border-radius: 4px; }
+        .success { background: #064e3b; }
+        .error { background: #7f1d1d; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Connection Debug Tool</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Basic Connectivity</h3>
+        <button onclick="testBasicConnection()">Test Basic Connection</button>
+        <div id="basic-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: API Health Check</h3>
+        <button onclick="testHealthCheck()">Test Health Check</button>
+        <div id="health-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Login API Test</h3>
+        <button onclick="testLoginAPI()">Test Login API</button>
+        <div id="login-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 4: Axios Test</h3>
+        <button onclick="testAxios()">Test with Axios</button>
+        <div id="axios-result" class="result" style="display: none;"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        function showResult(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.style.display = 'block';
+        }
+        
+        async function testBasicConnection() {
+            try {
+                console.log('Testing basic connection...');
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'testuser1', password: 'Test123!' })
+                });
+                
+                showResult('basic-result', `✅ Basic connection successful! Status: ${response.status}`, true);
+            } catch (error) {
+                console.error('Basic connection error:', error);
+                showResult('basic-result', `❌ Basic connection failed: ${error.message}`, false);
+            }
+        }
+        
+        async function testHealthCheck() {
+            try {
+                console.log('Testing health check...');
+                const response = await fetch('/api/health', { method: 'GET' });
+                const data = await response.json();
+                
+                showResult('health-result', `✅ Health check successful! Status: ${response.status}`, true);
+            } catch (error) {
+                console.error('Health check error:', error);
+                showResult('health-result', `❌ Health check failed: ${error.message}`, false);
+            }
+        }
+        
+        async function testLoginAPI() {
+            try {
+                console.log('Testing login API...');
+                const startTime = Date.now();
+                
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'testuser1', password: 'Test123!' })
+                });
+                
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('login-result', `✅ Login API successful! Duration: ${duration}ms, User: ${data.data.user.username}`, true);
+                } else {
+                    showResult('login-result', `❌ Login API failed! Status: ${response.status}`, false);
+                }
+            } catch (error) {
+                console.error('Login API error:', error);
+                showResult('login-result', `❌ Login API error: ${error.message}`, false);
+            }
+        }
+        
+        async function testAxios() {
+            try {
+                console.log('Testing with Axios...');
+                const startTime = Date.now();
+                
+                const response = await axios.post('/api/auth/login', {
+                    username: 'testuser1',
+                    password: 'Test123!'
+                }, {
+                    timeout: 30000,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                showResult('axios-result', `✅ Axios test successful! Duration: ${duration}ms, User: ${response.data.data.user.username}`, true);
+            } catch (error) {
+                console.error('Axios error:', error);
+                if (error.code === 'ECONNABORTED') {
+                    showResult('axios-result', `❌ Axios timeout: ${error.message}`, false);
+                } else {
+                    showResult('axios-result', `❌ Axios error: ${error.message}`, false);
+                }
+            }
+        }
+        
+        // Auto-run basic test on load
+        window.addEventListener('load', () => {
+            console.log('Connection debug tool loaded');
+            testBasicConnection();
+        });
+    </script>
+</body>
+</html>

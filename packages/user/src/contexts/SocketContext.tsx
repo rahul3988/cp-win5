@@ -45,7 +45,8 @@ export function SocketProvider({ children }: SocketProviderProps) {
       disconnectSocket();
     }
 
-    const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
+    // Force empty apiUrl to use Vite proxy instead of direct IP connection
+    const apiUrl = undefined; // Always use relative URL for Vite proxy
     const options = {
       auth: {
         token: tokens?.accessToken,
